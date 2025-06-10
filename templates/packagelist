@@ -39,6 +39,8 @@ gawk:gawk:$0
 gdb:gdb:$0
 gdbm:gdbm:$0-devel
 gettext:gettext:$0-devel
+cairo:cairo:$0-devel
+harfbuzz:harfbuzz:$0-devel
 git:git:$0
 gtk3:gtkplus:$0-devel
 make:gmake:$0
