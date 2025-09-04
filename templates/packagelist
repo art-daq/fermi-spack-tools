@@ -23,7 +23,6 @@ libdb:berkeley-db:$0-devel
 binutils:binutils:$0
 bison:bison:$0
 cigetcert:cigetcert:$0
-cmake3:cmake:$0
 coreutils:coreutils:$0
 libcurl:curl:$0-devel
 xorg-x11-proto-devel:damageproto:$0
