@@ -23,7 +23,6 @@ libdb:berkeley-db:$0-devel
 binutils:binutils:$0
 bison:bison:$0
 cigetcert:cigetcert:$0
-cmake3:cmake:$0
 coreutils:coreutils:$0
 libcurl:curl:$0-devel
 xorg-x11-proto-devel:damageproto:$0
@@ -39,6 +38,8 @@ gawk:gawk:$0
 gdb:gdb:$0
 gdbm:gdbm:$0-devel
 gettext:gettext:$0-devel
+cairo:cairo:$0-devel
+harfbuzz:harfbuzz:$0-devel
 git:git:$0
 gtk3:gtkplus:$0-devel
 make:gmake:$0
