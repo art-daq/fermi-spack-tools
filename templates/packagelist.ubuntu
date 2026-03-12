@@ -1,0 +1,110 @@
+########################################################################
+# Package list for Ubuntu/Debian systems
+#
+# Field 1: base Ubuntu/Debian package name (or POSIX search regex with
+#          substitution groups).
+#
+# Field 2: Spack package name as a string.
+#
+# Field 3: Ubuntu/Debian development package name as:
+#          a) a string.
+#          b) a POSIX replacement regex with match placeholders.
+#          In either case, an occurrence of "$0" will be replaced by the
+#          corresponding matched base package name.
+#
+# Note: Ubuntu package names differ from RPM names (e.g. libX11 on RPM
+#       is libx11-6 on Ubuntu, and the -devel suffix becomes -dev).
+########################################################################
+asciidoc:asciidoc:$0
+autoconf:autoconf:$0
+autogen:autogen:$0
+automake:automake:$0
+xfonts-utils:bdftopcf:$0
+(libdb5\.3|libdb5\.3t64):berkeley-db:libdb-dev
+binutils:binutils:$0
+bison:bison:$0
+coreutils:coreutils:$0
+libcurl4:curl:libcurl4-openssl-dev
+diffutils:diffutils:$0
+(libelf1|libelf1t64):elfutils:libelf-dev
+libexpat1:expat:libexpat1-dev
+findutils:findutils:$0
+flex:flex:$0
+xfonts-utils:font-util:$0
+libfontconfig1:fontconfig:libfontconfig1-dev
+libfreetype6:freetype:libfreetype6-dev
+gawk:gawk:$0
+gdb:gdb:$0
+(libgdbm6|libgdbm6t64):gdbm:libgdbm-dev
+gettext:gettext:$0
+libcairo2:cairo:libcairo2-dev
+libharfbuzz0b:harfbuzz:libharfbuzz-dev
+git:git:$0
+libgtk-3-0t64:gtkplus:libgtk-3-dev
+make:gmake:$0
+gperf:gperf:$0
+groff:groff:$0
+help2man:help2man:$0
+libkrb5-3:krb5:libkrb5-dev
+libc6:libc:libc6-dev
+:libedit:libedit-dev
+libfontenc1:libfontenc:libfontenc-dev
+libice6:libice:libice-dev
+libpciaccess0:libpciaccess:libpciaccess-dev
+libsm6:libsm:libsm-dev
+(libtirpc3|libtirpc3t64):libtirpc:libtirpc-dev
+libtool:libtool:$0
+libuuid1:libuuid:uuid-dev
+libx11-6:libx11:libx11-dev
+libxau6:libxau:libxau-dev
+libxcb1:libxcb:libxcb1-dev
+libxdamage1:libxdamage:libxdamage-dev
+libxdmcp6:libxdmcp:libxdmcp-dev
+libxext6:libxext:libxext-dev
+libxfixes3:libxfixes:libxfixes-dev
+libxfont2:libxfont:libxfont-dev
+libxft2:libxft:libxft-dev
+libxi6:libxi:libxi-dev
+libxkbcommon0:libxkbcommon:libxkbcommon-dev
+libxml2:libxml2:libxml2-dev
+libxmu6:libxmu:libxmu-dev
+libxpm4:libxpm:libxpm-dev
+libxrandr2:xrandr:libxrandr-dev
+libxrender1:libxrender:libxrender-dev
+libxshmfence1:libxshmfence:libxshmfence-dev
+(libxt6|libxt6t64):libxt:libxt-dev
+libxv1:libxv:libxv-dev
+libxvmc1:libxvmc:libxvmc-dev
+libxxf86vm1:libxxf86vm:libxxf86vm-dev
+m4:m4:$0
+libglu1-mesa:mesa-glu:libglu1-mesa-dev
+meson:meson:$0
+xfonts-utils:mkfontdir:$0
+xfonts-utils:mkfontscale:$0
+libmotif-common:motif:libmotif-dev
+mpich:mpich:libmpich-dev
+nasm:nasm:$0
+ninja-build:ninja:$0
+libncurses6:ncurses:libncurses-dev
+openssh-client:openssh:$0
+openssl:openssl:libssl-dev
+patchelf:patchelf:$0
+pkg-config:pkg-config:$0
+pkgconf:pkgconf:$0
+python3:python:python3-dev
+(libreadline8|libreadline8t64):readline:libreadline-dev
+tar:tar:$0
+tcl:tcl:tcl-dev
+texinfo:texinfo:$0
+texlive:texlive:$0
+tk:tk:tk-dev
+vim:vim:$0
+libxcb-image0:xcb-util-image:libxcb-image0-dev
+libxcb-keysyms1:xcb-util-keysyms:libxcb-keysyms1-dev
+libxcb-render-util0:xcb-util-renderutil:libxcb-render-util0-dev
+libxcb-ewmh2:xcb-util-wm:libxcb-ewmh-dev
+x11proto-dev:damageproto:$0
+x11proto-dev:xextproto:$0
+x11proto-dev:xproto:$0
+xtrans-dev:xtrans:$0
+zlib1g:zlib:zlib1g-dev

@@ -16,7 +16,8 @@ usage() {
     echo "   --packagelist=/a/b/c use custom package list"
 }
 
-src=$dir/templates/packagelist
+src=""
+src_default=true
 want_cvmfs=false
 if al=$(getopt --options "" --longoptions "help,with-externals,with-cvmfs,debug,packagelist:"  -- "$@")
 then
@@ -50,6 +51,7 @@ x--debug)
     ;;
 x--packagelist*)
     src=$2
+    src_default=false
     shift
     shift
     ;;
@@ -109,11 +111,14 @@ runversion() {
 
 maybe_define_getv() {
   case $1 in
-    ubuntu)
-      : ubuntu case
+    ubuntu|debian)
+      : ubuntu/debian case
       getv() {
-        apt list $1 2>/dev/null | grep '\[installed\]'| sed -e 's/[^ ]* //' -e 's/.*://' -e 's/[+-].*//' || runversion $1
+        dpkg-query -W -f '${Version}\n' "$1" 2>/dev/null | grep -v '^$' |
+          sed -e 's/.*://' -e 's/\.[a-zA-Z].*//' -e 's/[+-].*//' || runversion $1
       }
+      pkg_mgr_hint="deb"
+      getv_defined=true
       ;;
     almalinux|centos|fedora|rhel|scientific)
       if [ x$RPMCACHE != x ]
@@ -130,6 +135,42 @@ maybe_define_getv() {
             runversion $1
         }
       fi
+      getv_defined=true
+      ;;
+  esac
+}
+
+maybe_define_expand_pkg_pattern() {
+  case $1 in
+    ubuntu|debian)
+      expand_pkg_pattern() {
+        dpkg-query -W -f '${Package}\n' 2>/dev/null | grep -Ev -- '-dev$' |
+          sed -Ene "s&^($1)\$&\1&p" | sort -u
+      }
+      expand_pkg_pattern_defined=true
+      ;;
+    almalinux|centos|fedora|rhel|scientific)
+      expand_pkg_pattern() {
+        rpm -qa | sed -Ene '/-devel-/ b; s&^('"$1"')-.*&\1&p' | sort -u
+      }
+      expand_pkg_pattern_defined=true
+      ;;
+  esac
+}
+
+maybe_define_check_pkg_installed() {
+  case $1 in
+    ubuntu|debian)
+      check_pkg_installed() {
+        dpkg -s "$1" 2>/dev/null | grep -q "^Status: install ok installed"
+      }
+      check_pkg_installed_defined=true
+      ;;
+    almalinux|centos|fedora|rhel|scientific)
+      check_pkg_installed() {
+        rpm -q "$1" > /dev/null 2>&1
+      }
+      check_pkg_installed_defined=true
       ;;
   esac
 }
@@ -138,11 +179,17 @@ maybe_define_getv() {
 # for linux distros, prefer the apt/rpm version...
 . /etc/os-release 2>/dev/null
 [ -n "$ID" ] || ID=`lsb_release -i 2>/dev/null | cut -f 2- | tr '[A-Z]' '[a-z]'`
+pkg_mgr_hint="rpm"
+getv_defined=false
+expand_pkg_pattern_defined=false
+check_pkg_installed_defined=false
 for os_id in $ID $ID_LIKE; do
   maybe_define_getv $os_id
-  [ "`type -t getv`" == "function" ] && break
+  maybe_define_expand_pkg_pattern $os_id
+  maybe_define_check_pkg_installed $os_id
+  $getv_defined && break
 done
-if [ "`type -t getv`" != "function" ]; then
+if ! $getv_defined; then
   : generic / darwin case
   getv() {
     case x$1 in
@@ -165,6 +212,34 @@ if [ "`type -t getv`" != "function" ]; then
         ;;
     esac
   }
+fi
+if ! $expand_pkg_pattern_defined; then
+  # generic expand_pkg_pattern - no-op, returns nothing
+  expand_pkg_pattern() {
+    :
+  }
+fi
+if ! $check_pkg_installed_defined; then
+  # generic check_pkg_installed - always fail (assume not installed)
+  check_pkg_installed() {
+    false
+  }
+fi
+
+# Select OS-specific packagelist if not overridden
+if $src_default; then
+  os_packagelist="$dir/templates/packagelist.$ID"
+  if [ -r "$os_packagelist" ]; then
+    src="$os_packagelist"
+  else
+    src="$dir/templates/packagelist"
+  fi
+fi
+
+# Fall back to OS-ID-specific opts file if spack-os-specific one doesn't exist
+if [ ! -r "$optf" ] && [ -n "$ID" ]; then
+  optf_id="$dir/templates/package_opts.$ID"
+  [ -r "$optf_id" ] && optf="$optf_id"
 fi
 
 getv2() {
@@ -331,7 +406,7 @@ do
   case "$p" in
     *[][*+?\(\)]*)
       pr="$p"
-      p=`rpm -qa | sed -Ene '/-devel-/ b; s&^('"$p"')-.*&\1&p' | sort -u`
+      p=`expand_pkg_pattern "$p"`
       ;;
     *) pr=
   esac
@@ -354,7 +429,7 @@ do
   fi
 
   #variants from known variants list
-  opts=`grep "^$spp[ \t]" $optf | sed -e "s/^$spp[ \t]*//"`
+  opts=`[ -r "$optf" ] && grep "^$spp[ \t]" "$optf" | sed -e "s/^$spp[ \t]*//"`
   [ -n "$opts" ] && opts=" $opts"
 
   # also find any cvmfs versions
@@ -363,9 +438,9 @@ do
   for pkg in $p
   do
     ##################
-    # Ascertain the devel RPM name.
+    # Ascertain the devel package name.
     #
-    # Substitute RPM base name...
+    # Substitute package base name...
     case "$dv" in
       *\$0*) dpkg=$(echo "$dv" | sed -Ee 's&\$0&'"$pkg"'&');;
       *) dpkg=$dv
@@ -377,21 +452,21 @@ do
     ##################
     # find local version if any...
     v=`getv2 "$pkg" "$spp"`
-    if [ "x$v" = x ] # No base rpm
+    if [ "x$v" = x ] # No base package
     then
       echo "Notice: no system-installed versions found for $pkg (Spack package $spp)"
       if [ "$pkg" = "$dpkg" ]
       then
-        echo "        May want to install rpm: $pkg"
+        echo "        May want to install $pkg_mgr_hint: $pkg"
       else
-        echo "        May want to install rpms: $pkg and $dpkg"
+        echo "        May want to install ${pkg_mgr_hint}s: $pkg and $dpkg"
       fi
-    elif [ "$pkg" = "$dpkg" ] || rpm -q "$dpkg" > /dev/null # Check for installed devel rpm
+    elif [ "$pkg" = "$dpkg" ] || check_pkg_installed "$dpkg" # Check for installed devel package
     then
       :
     else
       echo "Notice: no development headers/libraries installed for $pkg (Spack package $spp)"
-      echo "        May want to install rpm: $dpkg"
+      echo "        May want to install $pkg_mgr_hint: $dpkg"
       v=
     fi
 
